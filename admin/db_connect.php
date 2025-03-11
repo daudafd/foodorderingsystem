@@ -1,13 +1,13 @@
-<?php 
+<?php
+$host = getenv('DB_HOST');
+$user = getenv('DB_USER');
+$pass = getenv('DB_PASS');
+$db = getenv('DB_NAME');
 
-// $conn= new mysqli('localhost','kosiboun_dfd','@Amafemolar.1','kosiboun_fos_db')or die("Could not connect to mysql".mysqli_error($conn));
+$conn = new mysqli($host, $user, $pass, $db);
 
-?>
-
-
-
-<?php 
-
-$conn= new mysqli('localhost','root','','fos_db')or die("Could not connect to mysql".mysqli_error($con));
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 
 ?>

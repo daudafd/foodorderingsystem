@@ -143,7 +143,6 @@ function login2() {
         return json_encode(['success' => false, 'error' => 'User does not exist.']);
     }
 }
-	
 			
 	// Helper function to get the client's IP address
 	private function getClientIP() {
