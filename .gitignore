@@ -1,0 +1,11 @@
+vendor/
+config.php
+.env
+secrets/
+*.log
+cache/
+.idea/
+.vscode/
+*.swp
+*.tmp
+/tmp/
