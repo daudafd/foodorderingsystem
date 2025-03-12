@@ -17,7 +17,7 @@ Class Action {
         $this->db = $conn;
     }
     function __destruct() {
-        $this->db = null; // Close PDO connection
+        // $this->db = null; // Close PDO connection
         ob_end_flush();
     }
 
@@ -54,58 +54,58 @@ Class Action {
     }
 
     function login2() {
-        // Extract POST data
+        // CSRF Token Verification
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+            // return json_encode(['success' => false, 'error' => 'CSRF token mismatch.']);
+            echo json_encode(['success' => false, 'error' => 'Error, try again later']);
+        }
+    
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
-
-        // Check if email and password are provided
+    
         if (empty($email) || empty($password)) {
             return json_encode(['success' => false, 'error' => 'Email or Password is empty.']);
         }
-
-        // Use prepared statement to prevent SQL injection
+    
         $stmt = $this->db->prepare("SELECT * FROM user_info WHERE email = :email");
         if (!$stmt) {
             return json_encode(['success' => false, 'error' => 'Database prepare error.']);
         }
-
+    
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($user && password_verify($password, $user['password'])) { //Use password_verify
-            // Set session variables for the user (excluding password)
+    
+        if ($user && password_verify($password, $user['password'])) {
+            // Regenerate session ID
+            session_regenerate_id(true);
+    
             foreach ($user as $key => $value) {
                 if ($key != 'password' && !is_numeric($key)) {
                     $_SESSION['login_' . $key] = $value;
                 }
             }
-
-            // Set additional fields if available
+    
             $_SESSION['address'] = $user['address'] ?? '';
             $_SESSION['mobile'] = $user['mobile'] ?? '';
-
-            // Transfer guest cart to user cart if necessary
+    
             if (isset($_SESSION['cart_items']) && !empty($_SESSION['cart_items'])) {
                 foreach ($_SESSION['cart_items'] as $item) {
-                    // Insert into the cart table
                     $cart_stmt = $this->db->prepare("INSERT INTO cart (product_id, qty, user_id, price, size, soup) VALUES (:product_id, :qty, :user_id, :price, :size, :soup)");
                     if (!$cart_stmt) {
                         return json_encode(['success' => false, 'error' => 'Database cart insert prepare error.']);
                     }
-
-                    // Ensure size is handled correctly
+    
                     $size = isset($item['size']) && !empty($item['size']) ? $item['size'] : null;
-
-                    // Corrected bind_param: 'iidsss'
+    
                     $cart_stmt->execute([':product_id' => $item['product_id'], ':qty' => $item['qty'], ':user_id' => $_SESSION['login_user_id'], ':price' => $item['price'], ':size' => $size, ':soup' => $item['soup']]);
-
+    
                     if (!$cart_stmt->rowCount() > 0) {
                         return json_encode(['success' => false, 'error' => 'Database cart insert execute error.']);
                     }
                 }
                 // Clear the session's cart after transferring the items to the database
                 unset($_SESSION['cart_items']);
-
+    
                 //delete guest cart items from database.
                 $ip = $this->getClientIP();
                 if ($ip) {
@@ -115,7 +115,7 @@ Class Action {
                     }
                 }
             }
-
+    
             // Redirect handling
             if (isset($_SESSION['intended_url'])) {
                 $redirect_url = $_SESSION['intended_url'];

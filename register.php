@@ -8,6 +8,10 @@ $dotenv->load();
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 ?>
 <style>
         /* Set fixed size for cards */
@@ -163,6 +167,7 @@ if (session_status() === PHP_SESSION_NONE) {
     </div></div>
   <div class="card-body">
   <form id="signup-form" method="POST" action="admin/ajax.php?action=signup">
+  <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 		<div class="form-group">
 			<label for="" class="control-label">Firstname</label>
 			<input type="text" name="first_name" placeholder="Input your First name" required="" class="form-control">
@@ -216,7 +221,7 @@ if (session_status() === PHP_SESSION_NONE) {
         uni_modal_right('Product', 'view_prod.php?id=' + $(this).attr('data-id'));
     });
 
- $(document).ready(function () {
+    $(document).ready(function () {
         $("#signup-form").submit(function (e) {
             e.preventDefault();
 
@@ -227,7 +232,7 @@ if (session_status() === PHP_SESSION_NONE) {
             $.ajax({
                 url: 'admin/ajax.php?action=signup',
                 type: "POST",
-                data: $(this).serialize(),
+                data: $(this).serialize(), // Serialize the form data, including the CSRF token
                 dataType: "json",
                 success: function (response) {
                     if (response.success) {
@@ -242,15 +247,15 @@ if (session_status() === PHP_SESSION_NONE) {
                             });
                             $("#signup-form")[0].reset();
                         }, 1000);
-                    } else if (response.error) { // Corrected: Check for response.error
+                    } else if (response.error) {
                         Swal.fire({
                             title: "Error!",
-                            text: response.error, // Use response.error directly
+                            text: response.error,
                             icon: "error",
                             confirmButtonText: "OK"
                         });
-                         $submitBtn.attr('disabled', false).html('Register');
-                         $('.rolling').remove();
+                        $submitBtn.attr('disabled', false).html('Register');
+                        $('.rolling').remove();
                     } else {
                         Swal.fire({
                             title: "Oops!",
@@ -258,8 +263,8 @@ if (session_status() === PHP_SESSION_NONE) {
                             icon: "error",
                             confirmButtonText: "OK"
                         });
-                         $submitBtn.attr('disabled', false).html('Register');
-                         $('.rolling').remove();
+                        $submitBtn.attr('disabled', false).html('Register');
+                        $('.rolling').remove();
                     }
                 },
                 error: function () {

@@ -102,6 +102,18 @@ switch ($action) {
         }
         break;
 
+        case 'signup':
+            // CSRF Token Verification
+            if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+                // echo json_encode(['success' => false, 'error' => 'CSRF token mismatch.']);
+                echo json_encode(['success' => false, 'error' => 'Error, try again later']);
+                exit;
+            }
+    
+            $response = $crud->signup(); // Or whatever your signup function is named
+            echo $response;
+            break;
+
         case 'save_settings':
             $save = $crud->save_settings();
             echo $save; // Directly echo the JSON response from save_settings()

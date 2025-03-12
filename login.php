@@ -8,9 +8,15 @@ $dotenv->load();
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// CSRF Token Generation
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 ?>
 <div class="container-fluid">
     <form id="login-form" method="POST" action="admin/ajax.php?action=login2">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
         <div class="form-group">
             <div id="login-error" class="text-danger mt-2" style="display:none;"></div>
             <label for="" class="control-label">Email</label>
@@ -25,7 +31,7 @@ if (session_status() === PHP_SESSION_NONE) {
         </div>
         <div class="button-container">
             <button type="submit" class="btn btn-primary">Sign In</button>
-            <button type="button" id="googleSignInButton" data-client-id="<?php echo htmlspecialchars($_ENV['GOOGLE_CLIENT_ID']); ?>" data-redirect-uri="<?php echo htmlspecialchars($_ENV['REDIRECT_URI']); ?>">                
+            <button type="button" id="googleSignInButton" data-client-id="<?php echo htmlspecialchars($_ENV['GOOGLE_CLIENT_ID']); ?>" data-redirect-uri="<?php echo htmlspecialchars($_ENV['REDIRECT_URI']); ?>">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="14px">
                     <path fill="#EA4335" d="M24 9.5c3.87 0 7.27 1.44 9.97 3.78l7.4-7.4C37.25 2.37 31.06 0 24 0 14.37 0 6.26 5.42 2.68 13.35l8.95 6.93C13.02 13.17 17.26 9.5 24 9.5z"/>
                     <path fill="#34A853" d="M46.64 20.2h-22.64v8.54h13.04c-1.16 3.06-3.37 5.54-6.3 7.22l9.44 7.31c5.5-5.06 8.66-12.54 8.66-21.07 0-1.43-.15-2.82-.42-4.2z"/>
@@ -130,10 +136,12 @@ if (session_status() === PHP_SESSION_NONE) {
         $submitBtn.append('<div class="rolling"></div>');
         $('#login-error').hide();
 
+        var formData = $(this).serialize(); // Serialize the form data, including the CSRF token
+
         $.ajax({
             url: 'admin/ajax.php?action=login2',
             method: 'POST',
-            data: $('#login-form').serialize(),
+            data: formData, // Send the serialized form data
             success: function (response) {
                 var data = JSON.parse(response);
 

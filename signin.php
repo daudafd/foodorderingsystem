@@ -7,6 +7,12 @@ $dotenv->load();
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// CSRF Token Generation
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 $error_message = $_SESSION['login_error'] ?? '';
 unset($_SESSION['login_error']); // Clear the error message after displaying
 ?>
@@ -166,6 +172,7 @@ unset($_SESSION['login_error']); // Clear the error message after displaying
         </div>
         <div class="card-body">
             <form id="login-form" method="POST" action="ajax.php?action=login2">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                 <?php if (!empty($error_message)): ?>
                     <div id="login-error" class="text-danger mt-2">
                         <?= htmlspecialchars($error_message) ?>
@@ -215,10 +222,12 @@ unset($_SESSION['login_error']); // Clear the error message after displaying
         $submitBtn.append('<div class="rolling"></div>');
         $('#login-error').hide();
 
+        var formData = $(this).serialize(); // Serialize the form data, including the CSRF token
+
         $.ajax({
             url: 'admin/ajax.php?action=login2',
             method: 'POST',
-            data: $('#login-form').serialize(),
+            data: formData, // Send the serialized form data
             success: function (response) {
                 var data = JSON.parse(response);
 
@@ -233,7 +242,7 @@ unset($_SESSION['login_error']); // Clear the error message after displaying
                             title: 'Welcome back!',
                             showConfirmButton: false,
                             timer: 1000
-                        }).then(function() {
+                        }).then(function () {
                             window.location.href = 'index.php?page=home';
                         });
                     }
@@ -243,7 +252,7 @@ unset($_SESSION['login_error']); // Clear the error message after displaying
                         icon: 'error',
                         title: 'Login Failed',
                         text: data.error || 'An unknown error occurred.'
-                    }).then(function() {
+                    }).then(function () {
                         $submitBtn.attr('disabled', false).html('Sign In');
                         $('.rolling').remove();
                     });
@@ -257,7 +266,7 @@ unset($_SESSION['login_error']); // Clear the error message after displaying
                     icon: 'error',
                     title: 'AJAX Error',
                     text: 'An error occurred, please try again.'
-                }).then(function() {
+                }).then(function () {
                     $submitBtn.attr('disabled', false).html('Sign In');
                     $('.rolling').remove();
                 });
