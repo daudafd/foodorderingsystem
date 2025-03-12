@@ -12,84 +12,74 @@ require 'PHPMailer/src/SMTP.php';
 
 require __DIR__ . '/../vendor/autoload.php'; // Adjust path if needed
 
-// session_start();
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
 Class Action {
-	private $db;
+    private $db;
 
-	public function __construct() {
-		ob_start();
-   	include 'db_connect.php';
-    
-    $this->db = $conn;
-	}
-	function __destruct() {
-	    $this->db->close();
-	    ob_end_flush();
-	}
+    public function __construct() {
+        ob_start();
+        include 'db_connect.php'; // This should now provide a PDO connection ($conn)
+        $this->db = $conn;
+    }
 
-function reset_password() {
+    function __destruct() {
+        // No need to close PDO explicitly, it will close automatically
+        ob_end_flush();
+    }
+
+    function reset_password() {
         if (session_status() == PHP_SESSION_NONE) {
-			session_start();
-		}
-    
-    try {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            throw new Exception('Invalid request method.');
+            session_start();
         }
 
-        if (empty($_POST['email']) || !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
-            throw new Exception('Invalid email address.');
-        }
+        try {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new Exception('Invalid request method.');
+            }
 
-        $email = $this->db->real_escape_string($_POST['email']);
+            if (empty($_POST['email']) || !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+                throw new Exception('Invalid email address.');
+            }
 
-        // Check if user exists
-        $stmt = $this->db->prepare("SELECT user_id, email, first_name FROM user_info WHERE email = ?");
-        if (!$stmt) {
-            throw new Exception("Database error preparing statement: " . $this->db->error);
-        }
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $user = $result->fetch_assoc();
-        $stmt->close();
+            $email = $_POST['email']; // No need to escape with PDO
 
-        if (!$user) {
-            throw new Exception('No account found with that email.');
-        }
+            // Check if user exists
+            $stmt = $this->db->prepare("SELECT user_id, email, first_name FROM user_info WHERE email = ?");
+            if (!$stmt) {
+                throw new Exception("Database error preparing statement: " . $this->db->errorInfo()[2]);
+            }
+            $stmt->execute([$email]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $user_id = $user['user_id'];
-        $user_name = $user['first_name'];
-        $user_email = $user['email']; // Get the email from the user data
-        $token = bin2hex(random_bytes(32));
-        $expire_time = time() + 86400;
+            if (!$user) {
+                throw new Exception('No account found with that email.');
+            }
 
-        // Store the reset token
-        $stmt = $this->db->prepare("
-            INSERT INTO password_resets (user_id, user_email, token, created_at, expires_at)
-            VALUES (?, ?, ?, NOW(), FROM_UNIXTIME(?))
-            ON DUPLICATE KEY UPDATE token = VALUES(token), expires_at = VALUES(expires_at)
-        ");
+            $user_id = $user['user_id'];
+            $user_name = $user['first_name'];
+            $user_email = $user['email'];
+            $token = bin2hex(random_bytes(32));
+            $expire_time = time() + 86400;
 
-        if (!$stmt) {
-            throw new Exception("Database error preparing statement: " . $this->db->error);
-        }
+            // Store the reset token
+            $stmt = $this->db->prepare("
+                INSERT INTO password_resets (user_id, user_email, token, created_at, expires_at)
+                VALUES (?, ?, ?, NOW(), FROM_UNIXTIME(?))
+                ON DUPLICATE KEY UPDATE token = VALUES(token), expires_at = VALUES(expires_at)
+            ");
 
-        $stmt->bind_param("issi", $user_id, $user_email, $token, $expire_time); // Correct type string and variables
+            if (!$stmt) {
+                throw new Exception("Database error preparing statement: " . $this->db->errorInfo()[2]);
+            }
 
-        $stmt->execute();
-        if ($stmt->error) {
-            throw new Exception("Database error executing statement: " . $stmt->error);
-        }
+            $stmt->execute([$user_id, $user_email, $token, $expire_time]);
 
-        $stmt->close();
+            $reset_link = "https://www.fifi.kosibound.com.ng/index.php?page=new_password&token=" . $token;
 
-        $reset_link = "https://www.fifi.kosibound.com.ng/index.php?page=new_password&token=". $token;
-
-        // Send email using PHPMailer
+            // Send email using PHPMailer
         try {
             $mail = new PHPMailer(true);
             $mail->isSMTP();
@@ -629,81 +619,71 @@ function reset_password() {
             } else {
                 throw new Exception('Email sending failed: ' . $mail->ErrorInfo);
             }
-        } catch (Exception $e) {
+        } 
+        catch (Exception $e) {
             throw new Exception('Email sending failed: ' . $e->getMessage());
         }
 
-    } catch (Exception $e) {
-        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
-    }
 
-    exit;
-}
-    
-function update_password() {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid request method.']);
+        } catch (Exception $e) {
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        }
+
         exit;
     }
 
-    require 'db_connect.php'; // Ensure database connection
-
-    try {
-        // Validate form data
-        $token = $_POST['token'] ?? null;
-        $new_password = $_POST['new_password'] ?? null;
-        $confirm_password = $_POST['confirm_password'] ?? null;
-
-        if (!$token || !$new_password || !$confirm_password) {
-            throw new Exception('All fields are required.');
+    function update_password() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid request method.']);
+            exit;
         }
-
-        // Check if passwords match
-        if ($new_password !== $confirm_password) {
-            throw new Exception('Passwords do not match.');
+      
+        try {
+                    // Validate form data
+                    $token = $_POST['token'] ?? null;
+                    $new_password = $_POST['new_password'] ?? null;
+                    $confirm_password = $_POST['confirm_password'] ?? null;
+            
+                    if (!$token || !$new_password || !$confirm_password) {
+                        throw new Exception('All fields are required.');
+                    }
+            
+                    // Check if passwords match
+                    if ($new_password !== $confirm_password) {
+                        throw new Exception('Passwords do not match.');
+                    }
+            
+                    // Validate password complexity
+                    if (strlen($new_password) < 6) {
+                        throw new Exception('Password must be at least 6 characters long.');
+                    }
+      
+            // Hash the new password
+            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+      
+            // Find user by token
+            $stmt = $this->db->prepare("SELECT user_id FROM password_resets WHERE token = ? AND expires_at > NOW()");
+            $stmt->execute([$token]);
+            $reset_record = $stmt->fetch(PDO::FETCH_ASSOC);
+      
+            if (!$reset_record) {
+                throw new Exception('Invalid or expired reset token.');
+            }
+      
+            $user_id = $reset_record['user_id'];
+      
+            // Update user's password
+            $stmt = $this->db->prepare("UPDATE user_info SET password = ? WHERE user_id = ?");
+            $stmt->execute([$hashed_password, $user_id]);
+      
+            // Delete used token
+            $stmt = $this->db->prepare("DELETE FROM password_resets WHERE token = ?");
+            $stmt->execute([$token]);
+      
+            echo json_encode(["status" => "success", "message" => "Your password has been successfully updated."]);
+        } catch (Exception $e) {
+            echo json_encode(["status" => "error", "message" => $e->getMessage()]);
         }
-
-        // Validate password complexity
-        if (strlen($new_password) < 6) {
-            throw new Exception('Password must be at least 6 characters long.');
-        }
-
-        // Hash the new password
-        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-
-        // Find user by token
-        $stmt = $conn->prepare("SELECT user_id FROM password_resets WHERE token = ? AND expires_at > NOW()");
-        $stmt->bind_param("s", $token);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $reset_record = $result->fetch_assoc();
-        $stmt->close();
-
-        if (!$reset_record) {
-            throw new Exception('Invalid or expired reset token.');
-        }
-
-        $user_id = $reset_record['user_id'];
-
-        // Update user's password
-        $stmt = $conn->prepare("UPDATE user_info SET password = ? WHERE user_id = ?");
-        $stmt->bind_param("si", $hashed_password, $user_id);
-        if (!$stmt->execute()) {
-            throw new Exception('Failed to update password.');
-        }
-        $stmt->close();
-
-        // Delete used token
-        $stmt = $conn->prepare("DELETE FROM password_resets WHERE token = ?");
-        $stmt->bind_param("s", $token);
-        $stmt->execute();
-        $stmt->close();
-
-        echo json_encode(["status" => "success", "message" => "Your password has been successfully updated."]);
-    } catch (Exception $e) {
-        echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+      }
+         
     }
-}
-
-	
-}
