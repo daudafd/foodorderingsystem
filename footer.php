@@ -1,7 +1,7 @@
  <script>
- 	$('.datepicker').datepicker({
- 		format:"yyyy-mm-dd"
- 	})
+ 	// $('.datepicker').datepicker({
+ 	// 	format:"yyyy-mm-dd"
+ 	// })
  	 window.start_load = function(){
     $('body').prepend('<di id="preloader2"></di>')
   }

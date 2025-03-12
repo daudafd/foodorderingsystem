@@ -1,15 +1,13 @@
- <!-- Masthead-->
- <header class="masthead">
-     <div class="container h-100">
-         <div class="row h-100 align-items-center justify-content-center text-center">
-             <div class="col-lg-10 align-self-end mb-4 page-title">
-                 <h3 class="text-white">Cart List</h3>
-                 <hr class="divider my-4" />
-             </div>
-
-         </div>
-     </div>
- </header>
+<header class="masthead">
+    <div class="container h-100">
+        <div class="row h-100 align-items-center justify-content-center text-center">
+            <div class="col-lg-10 align-self-end mb-4 page-title">
+                <h3 class="text-white">Cart List</h3>
+                <hr class="divider my-4" />
+            </div>
+        </div>
+    </div>
+</header>
 <section class="page-section" id="menu">
     <div class="container">
         <div class="row">
@@ -26,74 +24,72 @@
                 </div>
                 <?php
                 if (isset($_SESSION['login_user_id'])) {
-                    $data = "where c.user_id = '" . $_SESSION['login_user_id'] . "' ";
+                    $data = "WHERE c.user_id = ?";
+                    $params = [$_SESSION['login_user_id']];
                 } else {
-                    $ip = isset($_SERVER['HTTP_CLIENT_IP']) ? $_SERVER['HTTP_CLIENT_IP'] : (isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR']);
-                    $data = "where c.client_ip = '" . $ip . "' ";
+                    $ip = $_SERVER['REMOTE_ADDR'] ?? null;
+                    $data = "WHERE c.client_ip = ?";
+                    $params = [$ip];
                 }
                 $total = 0;
-                $get = $conn->query("SELECT *,c.id as cid, c.price as cprice, p.category_id as category_id FROM cart c inner join product_list p on p.id = c.product_id " . $data);
-                while ($row = $get->fetch_assoc()):
-                    $total += ($row['qty'] * $row['cprice']);
-                    $_SESSION['total_amount'] = $total;
-                ?>
-                <div class="card">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6" style="text-align: -webkit-center">
-                                <a href="javascript:void(0)" class="rem_cart btn btn-sm btn-outline-danger" data-id="<?php echo $row['cid'] ?>"><i class="fa fa-trash"></i></a>
-                                <img src="assets/img/<?php echo $row['img_path'] ?>" alt="">
-                            </div>
-                            <div class="col-md-4">
-                                <p><b><large>
-                                    <?php
-                                    echo $row['name'];
-                                    // Conditional "with" for swallow foods
-                                    $swallow_categories = [10]; // Replace with your swallow category IDs
-                                    if (isset($row['category_id']) && in_array($row['category_id'], $swallow_categories)) {
-                                        echo " with " . $row['soup'];
-                                    } elseif (strpos(strtolower($row['name']), 'semo') !== false || strpos(strtolower($row['name']), 'poundo yam') !== false || strpos(strtolower($row['name']), 'eba') !== false){
-                                        echo " with " . $row['soup'];
-                                    }
-                                    ?>
-                                </large></b></p>
-                                <p><b><small>Desc :<?php echo $row['description'] ?></small></b></p>
-                                <p><b><small>
-                                    <?php
-                                    // Assuming you have a way to determine if it's a "protein" food
-                                    // You might check a category ID, a specific name, or some other criteria
-                                    $protein_categories = [1]; // Example category IDs for protein foods
-                                
-                                    // Example using category_id:
-                                    if (isset($row['category_id']) && in_array($row['category_id'], $protein_categories)) {
-                                        echo "Size: " . ucfirst($row['size']);
-                                    }
-                                    // Example using product name:
-                                    elseif (strpos(strtolower($row['name']), 'chicken') !== false || strpos(strtolower($row['name']), 'beef') !== false || strpos(strtolower($row['name']), 'fish') !== false){
-                                        echo "Size: " . ucfirst($row['size']);
-                                    }
-                                
-                                    ?>
-                                </small></b></p>
-                                <p> <b><small>Unit Price : N<?php echo number_format($row['cprice'], 2) ?></small></b></p>
-                                <p><small>QTY :</small></p>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <button class="btn btn-outline-secondary qty-minus" type="button" data-id="<?php echo $row['cid'] ?>"><span class="fa fa-minus"></span></button>
+                try {
+                    $stmt = $conn->prepare("SELECT *, c.id as cid, c.price as cprice, p.category_id as category_id FROM cart c INNER JOIN product_list p ON p.id = c.product_id " . $data . " ORDER BY c.id DESC");
+                    $stmt->execute($params);
+                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)):
+                        $total += ($row['qty'] * $row['cprice']);
+                        $_SESSION['total_amount'] = $total;
+                        ?>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6" style="text-align: -webkit-center">
+                                        <a href="javascript:void(0)" class="rem_cart btn btn-sm btn-outline-danger" data-id="<?php echo $row['cid'] ?>"><i class="fa fa-trash"></i></a>
+                                        <img src="assets/img/<?php echo $row['img_path'] ?>" alt="">
                                     </div>
-                                    <input type="number" readonly value="<?php echo $row['qty'] ?>" min=1 class="form-control text-center" name="qty">
-                                    <div class="input-group-prepend">
-                                        <button class="btn btn-outline-secondary qty-plus" type="button" id="" data-id="<?php echo $row['cid'] ?>"><span class="fa fa-plus"></span></button>
+                                    <div class="col-md-4">
+                                        <p><b><large>
+                                                    <?php
+                                                    echo $row['name'];
+                                                    $swallow_categories = [10];
+                                                    if (isset($row['category_id']) && in_array($row['category_id'], $swallow_categories)) {
+                                                        echo " with " . $row['soup'];
+                                                    } elseif (strpos(strtolower($row['name']), 'semo') !== false || strpos(strtolower($row['name']), 'poundo yam') !== false || strpos(strtolower($row['name']), 'eba') !== false) {
+                                                        echo " with " . $row['soup'];
+                                                    }
+                                                    ?>
+                                                </large></b></p>
+                                        <p><b><small>Desc :<?php echo $row['description'] ?></small></b></p>
+                                        <p><b><small>
+                                                    <?php
+                                                    $protein_categories = [1];
+                                                    if (isset($row['category_id']) && in_array($row['category_id'], $protein_categories)) {
+                                                        echo "Size: " . ucfirst($row['size']);
+                                                    }
+                                                    ?>
+                                                </small></b></p>
+                                        <p> <b><small>Unit Price : N<?php echo number_format($row['cprice'], 2) ?></small></b></p>
+                                        <p><small>QTY :</small></p>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <button class="btn btn-outline-secondary qty-minus" type="button" data-id="<?php echo $row['cid'] ?>"><span class="fa fa-minus"></span></button>
+                                            </div>
+                                            <input type="number" readonly value="<?php echo $row['qty'] ?>" min=1 class="form-control text-center" name="qty">
+                                            <div class="input-group-prepend">
+                                                <button class="btn btn-outline-secondary qty-plus" type="button" id="" data-id="<?php echo $row['cid'] ?>"><span class="fa fa-plus"></span></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-right">
+                                        <b><large><?php echo number_format($row['qty'] * $row['cprice'], 2) ?></large></b>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4 text-right">
-                                <b><large><?php echo number_format($row['qty'] * $row['cprice'], 2) ?></large></b>
-                            </div>
                         </div>
-                    </div>
-                </div>
-                <?php endwhile; ?>
+                    <?php endwhile;
+                } catch (PDOException $e) {
+                    error_log("Cart list error: " . $e->getMessage());
+                    echo "<div class='alert alert-danger'>Error loading cart. Please try again later.</div>";
+                } ?>
             </div>
             <div class="col-md-4">
                 <div class="sticky">
@@ -116,40 +112,39 @@
         </div>
     </div>
 </section>
- <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel"
-     aria-hidden="true">
-     <div class="modal-dialog" role="document">
-         <div class="modal-content">
-             <div class="modal-header">
-                 <h5 class="modal-title" id="confirmDeleteModalLabel">Confirm Delete</h5>
-                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                     <span aria-hidden="true">&times;</span>
-                 </button>
-             </div>
-             <div class="modal-body">
-                 Are you sure you want to remove this item from your cart?
-             </div>
-             <div class="modal-footer">
-                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                 <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
-             </div>
-         </div>
-     </div>
- </div>
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to remove this item from your cart?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
 
- <div class="position-fixed bottom-0 right-0 p-3" style="z-index: 5; right: 0; bottom: 0;">
-     <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3000">
-         <div class="toast-header">
-             <strong class="mr-auto">Success</strong>
-             <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
-                 <span aria-hidden="true">&times;</span>
-             </button>
-         </div>
-         <div class="toast-body">
-             Item removed from cart.
-         </div>
-     </div>
- </div>
+<div class="position-fixed bottom-0 right-0 p-3" style="z-index: 5; right: 0; bottom: 0;">
+    <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3000">
+        <div class="toast-header">
+            <strong class="mr-auto">Success</strong>
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="toast-body">
+            Item removed from cart.
+        </div>
+    </div>
+</div>
  <style>
 .card p {
     margin: unset
@@ -196,20 +191,19 @@ $(document).ready(function() {
 
 updateCartCount();
 
+    $('.view_prod').click(function() {
+        uni_modal_right('Product', 'view_prod.php?id=' + $(this).attr('data-id'))
+    })
 
-$('.view_prod').click(function() {
-    uni_modal_right('Product', 'view_prod.php?id=' + $(this).attr('data-id'))
-})
+    function start_load() {
+        $('body').prepend('<div id="preloader">Loading...</div>'); // Example loader
+    }
 
-function start_load() {
-    $('body').prepend('<div id="preloader">Loading...</div>'); // Example loader
-}
+    function end_load() {
+        $('#preloader').remove();
+    }
 
-function end_load() {
-    $('#preloader').remove();
-}
-
-function updateCartCount() {
+    function updateCartCount() {
         $.ajax({
             url: 'admin/ajax.php?action=get_cart_count',
             method: 'GET',
@@ -228,11 +222,11 @@ function updateCartCount() {
         });
     }
 
-$(document).ready(function() {
-    updateCartCount(); // Call on page load
-});
+    $(document).ready(function() {
+        updateCartCount(); // Call on page load
+    });
 
-function update_qty(qty, id) {
+    function update_qty(qty, id) {
         $.ajax({
             url: 'admin/ajax.php?action=update_cart_qty',
             method: "POST",
@@ -283,30 +277,30 @@ function update_qty(qty, id) {
     });
 
 
-function load_cart() {
-    $.ajax({
-        url: 'admin/ajax.php?action=get_cart_total',
-        method: "GET",
-        success: function(resp) {
-            try {
-                let res = JSON.parse(resp);
-                if (res.success) {
-                    // Update total amount
-                    $('.card-body p.text-right b').text(res.total.toFixed(2));
-                } else {
-                    console.error("Error fetching cart total:", res.error || "Unknown error");
+    function load_cart() {
+        $.ajax({
+            url: 'admin/ajax.php?action=get_cart_total',
+            method: "GET",
+            success: function(resp) {
+                try {
+                    let res = JSON.parse(resp);
+                    if (res.success) {
+                        // Update total amount
+                        $('.card-body p.text-right b').text(res.total.toFixed(2));
+                    } else {
+                        console.error("Error fetching cart total:", res.error || "Unknown error");
+                    }
+                } catch (e) {
+                    console.error("Invalid response:", resp);
                 }
-            } catch (e) {
-                console.error("Invalid response:", resp);
+            },
+            error: function(err) {
+                console.error("AJAX Error:", err);
             }
-        },
-        error: function(err) {
-            console.error("AJAX Error:", err);
-        }
-    });
-}
+        });
+    }
 
-$('.rem_cart').click(function() {
+    $('.rem_cart').click(function() {
         var id = $(this).attr('data-id');
 
         $('#confirmDeleteModal').modal('show');

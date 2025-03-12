@@ -1,31 +1,35 @@
 <?php
 include 'db_connect.php';
 if (isset($_GET['id'])) {
-    $qry = $conn->query("SELECT * FROM meat_options WHERE id = " . $_GET['id']);
-    foreach ($qry->fetch_array() as $k => $v) {
-        $$k = $v;
+    $qry = $conn->prepare("SELECT * FROM meat_options WHERE id = ?");
+    $qry->execute([$_GET['id']]);
+    $result = $qry->fetch(PDO::FETCH_ASSOC);
+    if ($result) {
+        foreach ($result as $k => $v) {
+            $$k = $v;
+        }
     }
 }
 ?>
-    <style>
-        #loading-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+<style>
+    #loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
-        #loading-overlay > div { /* Target only the spinner div */
-            /* Add any specific styles for the spinner div here */
-        }
-    </style>
+    #loading-overlay > div {
+        /* Add any specific styles for the spinner div here */
+    }
+</style>
 <div class="container-fluid">
     <form action="" id="manage-meat-option">
         <input type="hidden" name="id" value="<?php echo isset($id) ? $id : '' ?>">

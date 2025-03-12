@@ -68,38 +68,39 @@
 
 <script>
 function fetchOrderCounts() {
-    fetch('ajax.php?action=count_today_orders', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-    })
-    .then(response => response.text())
-    .then(text => {
-        try {
-            return JSON.parse(text);
-        } catch (error) {
-            console.error("Invalid JSON received:", text);
-            throw new Error("Invalid JSON format");
-        }
-    })
-    .then(data => {
-        if (data.error) {
-            console.error("Server error:", data.error);
-            return;
-        }
-        document.getElementById('pending_count').innerText = data.pending || 0;
-        document.getElementById('confirmed_count').innerText = data.confirmed || 0;
-        document.getElementById('rejected_count').innerText = data.rejected || 0;
-        document.getElementById('total_orders').innerText = data.total || 0;
-    })
-    .catch(error => {
-        console.error('Error fetching order counts:', error);
-    });
+    fetch('ajax.php?action=count_today_orders', { method: 'GET' })
+        .then(response => response.text()) // Get raw response first
+        .then(text => {
+            console.log("Raw Response from PHP:", text); // Debugging
+            
+            try {
+                let data = JSON.parse(text); // Convert to JSON
+                console.log("Parsed Data:", data);
+
+                // Ensure data is in the expected format
+                if (typeof data === 'object' && data !== null) {
+                    // Update the span elements with received values
+                    document.getElementById('pending_count').textContent = data.pending ?? 0;
+                    document.getElementById('confirmed_count').textContent = data.confirmed ?? 0;
+                    document.getElementById('rejected_count').textContent = data.rejected ?? 0;
+                    document.getElementById('total_orders').textContent = data.total ?? 0;
+                } else {
+                    console.error("Invalid data format received:", data);
+                }
+            } catch (error) {
+                console.error("Error parsing JSON:", error);
+            }
+        })
+        .catch(error => console.error("Fetch error:", error));
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-    fetchOrderCounts(); // Initial fetch
+// Call the function when the page loads
+document.addEventListener('DOMContentLoaded', fetchOrderCounts);
 
-    // Auto-reload every 5 seconds (adjust as needed)
-    setInterval(fetchOrderCounts, 1000);
+
+document.addEventListener("DOMContentLoaded", function() {
+    setTimeout(fetchOrderCounts, 500); // Delay to ensure DOM is ready
+    setInterval(fetchOrderCounts, 5000);
 });
+
 </script>

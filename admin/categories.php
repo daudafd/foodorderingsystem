@@ -48,23 +48,24 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php
-                                    $i = 1;
-                                    $cats = $conn->query("SELECT * FROM category_list order by id asc");
-                                    while ($row = $cats->fetch_assoc()) :
-                                        ?>
-                                        <tr>
-                                            <td class="text-center"><?php echo $i++ ?></td>
-                                            <td class="">
-                                                <?php echo $row['name'] ?>
-                                            </td>
-                                            <td class="text-center">
-                                                <button class="btn btn-sm btn-primary edit_cat" type="button" data-id="<?php echo $row['id'] ?>" data-name="<?php echo $row['name'] ?>">Edit</button>
-                                                <button class="btn btn-sm btn-danger delete_cat" type="button" data-id="<?php echo $row['id'] ?>">Delete</button>
-                                            </td>
-                                        </tr>
-                                    <?php endwhile; ?>
-                                </tbody>
+    <?php
+    $i = 1;
+    $cats = $conn->prepare("SELECT * FROM category_list ORDER BY id ASC");
+    $cats->execute();
+    while ($row = $cats->fetch(PDO::FETCH_ASSOC)) :
+    ?>
+        <tr>
+            <td class="text-center"><?php echo $i++ ?></td>
+            <td class="">
+                <?php echo $row['name'] ?>
+            </td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-primary edit_cat" type="button" data-id="<?php echo $row['id'] ?>" data-name="<?php echo $row['name'] ?>">Edit</button>
+                <button class="btn btn-sm btn-danger delete_cat" type="button" data-id="<?php echo $row['id'] ?>">Delete</button>
+            </td>
+        </tr>
+    <?php endwhile; ?>
+</tbody>
                             </table>
                         </div>
                     </div>

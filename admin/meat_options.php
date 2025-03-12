@@ -29,8 +29,11 @@ include 'db_connect.php';
                                 <tbody>
                                     <?php
                                     include 'db_connect.php';
-                                    $qry = $conn->query("SELECT * FROM meat_options ORDER BY meat_type ASC, size ASC");
-                                    while ($row = $qry->fetch_assoc()):
+
+                                    $qry = $conn->prepare("SELECT * FROM meat_options ORDER BY meat_type ASC, size ASC");
+                                    $qry->execute();
+
+                                    while ($row = $qry->fetch(PDO::FETCH_ASSOC)) :
                                     ?>
                                         <tr>
                                             <td><?php echo $row['meat_type'] ?></td>

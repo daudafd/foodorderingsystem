@@ -61,13 +61,18 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="delivery_option">Delivery Option</label>
+                    <label for="delivery_option">Delivery Option (Axis)</label>
                     <select id="delivery_option" name="delivery_option" class="form-control">
                         <option value="0">Self Pickup (Free)</option>
-                        <option value="1100">Alagbaka + Takeaway (+₦1100)</option>
+                        <!-- <option value="1100">Alagbaka + Takeaway (+₦1100)</option>
                         <option value="1300">Ijoka + Takeaway (+₦1300)</option>
                         <option value="1100">Oba-Ile + Takeaway  (+₦1100)</option>
-                        <option value="1500">Futa + Takeaway (+₦1500)</option>
+                        <option value="1500">Futa + Takeaway (+₦1500)</option> -->
+                        <option value="1100">Alagbaka </option>
+                        <option value="1100">Oba-Ile </option>
+                        <option value="1100">Oba-Adesida </option>
+                        <option value="1300">Ijoka </option>
+                        <option value="1500">Futa </option>
                     </select>
                 </div>
                 

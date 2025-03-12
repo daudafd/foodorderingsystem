@@ -92,109 +92,106 @@ include('db_connect.php');
                 <div class="form-group">
                   <label class="control-label">Category</label>
                   <select name="category_id" class="custom-select browser-default">
-                    <?php
-                      $cat = $conn->query("SELECT * FROM category_list ORDER BY name ASC");
-                      while($row = $cat->fetch_assoc()):
-                    ?>
-                    <option value="<?php echo $row['id'] ?>"><?php echo $row['name'] ?></option>
-                    <?php endwhile; ?>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="control-label">Base Price</label>
-                  <input type="number" class="form-control text-right" name="price" step="any" required>
-                </div>
-                <!-- Checkbox to indicate if item has size options (e.g., for meat) -->
-                <div class="form-group">
-                  <label for="hasSizeOptions" class="control-label">Has Size Options? (For Meat items only)</label>
-                  <input type="checkbox" id="hasSizeOptions" name="has_size_options">
-                </div>
-                <!-- Extra fields shown only when size options are needed -->
-                <div id="sizeOptionsFields" style="display:none;">
-                  <div class="form-group">
-                    <label class="control-label">Small Price</label>
-                    <input type="number" class="form-control text-right" name="price_small" step="any">
-                  </div>
-                  <div class="form-group">
-                    <label class="control-label">Medium Price</label>
-                    <input type="number" class="form-control text-right" name="price_medium" step="any">
-                  </div>
-                  <div class="form-group">
-                    <label class="control-label">Large Price</label>
-                    <input type="number" class="form-control text-right" name="price_large" step="any">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="control-label">Image</label>
-                  <input type="file" class="form-control" name="img" onchange="displayImg(this, $(this))">
-                </div>
-                <div class="form-group">
-                  <img src="" alt="" id="cimg">
-                </div>
-              </div>
-              <div class="card-footer">
-                <div class="row">
-                  <div class="col-md-12">
-                    <button class="btn btn-sm btn-primary col-sm-3 offset-md-3"> Save</button>
-                    <button class="btn btn-sm btn-default col-sm-3" type="button" onclick="$('#manage-menu').get(0).reset()"> Cancel</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </form>
+    <?php
+    $cat = $conn->prepare("SELECT * FROM category_list ORDER BY name ASC");
+    $cat->execute();
+    while ($row = $cat->fetch(PDO::FETCH_ASSOC)) :
+    ?>
+        <option value="<?php echo $row['id'] ?>"><?php echo $row['name'] ?></option>
+    <?php endwhile; ?>
+</select>
+</div>
+<div class="form-group">
+    <label class="control-label">Base Price</label>
+    <input type="number" class="form-control text-right" name="price" step="any" required>
+</div>
+<div class="form-group">
+    <label for="hasSizeOptions" class="control-label">Has Size Options? (For Meat items only)</label>
+    <input type="checkbox" id="hasSizeOptions" name="has_size_options">
+</div>
+<div id="sizeOptionsFields" style="display:none;">
+    <div class="form-group">
+        <label class="control-label">Small Price</label>
+        <input type="number" class="form-control text-right" name="price_small" step="any">
+    </div>
+    <div class="form-group">
+        <label class="control-label">Medium Price</label>
+        <input type="number" class="form-control text-right" name="price_medium" step="any">
+    </div>
+    <div class="form-group">
+        <label class="control-label">Large Price</label>
+        <input type="number" class="form-control text-right" name="price_large" step="any">
+    </div>
+</div>
+<div class="form-group">
+    <label class="control-label">Image</label>
+    <input type="file" class="form-control" name="img" onchange="displayImg(this, $(this))">
+</div>
+<div class="form-group">
+    <img src="" alt="" id="cimg">
+</div>
+</div>
+<div class="card-footer">
+    <div class="row">
+        <div class="col-md-12">
+            <button class="btn btn-sm btn-primary col-sm-3 offset-md-3"> Save</button>
+            <button class="btn btn-sm btn-default col-sm-3" type="button" onclick="$('#manage-menu').get(0).reset()"> Cancel</button>
         </div>
-        <!-- FORM Panel -->
-
-        <!-- Table Panel -->
-        <div class="col-md-8">
-          <div class="card">
-            <div class="card-body">
-                <table class="table table-bordered table-hover">
-                  <thead>
-                    <tr>
-                      <th class="text-center">#</th>
-                      <th class="text-center">Img</th>
-                      <th class="text-center">Item</th>
-                      <th class="text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <?php 
-                      $i = 1;
-                      $cats = $conn->query("SELECT * FROM product_list ORDER BY id ASC");
-                      while($row = $cats->fetch_assoc()):
-                    ?>
-                    <tr>
-                      <td class="text-center"><?php echo $i++ ?></td>
-                      <td class="text-center">
+    </div>
+</div>
+</div>
+</form>
+</div>
+<div class="col-md-8">
+<div class="card">
+    <div class="card-body">
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th class="text-center">#</th>
+                    <th class="text-center">Img</th>
+                    <th class="text-center">Item</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                $i = 1;
+                $cats = $conn->prepare("SELECT * FROM product_list ORDER BY id ASC");
+                $cats->execute();
+                while ($row = $cats->fetch(PDO::FETCH_ASSOC)) :
+                ?>
+                <tr>
+                    <td class="text-center"><?php echo $i++ ?></td>
+                    <td class="text-center">
                         <img src="<?php echo isset($row['img_path']) ? '../assets/img/'.$row['img_path'] : '' ?>" alt="" id="cimg">
-                      </td>
-                      <td>
+                    </td>
+                    <td>
                         <p>Name : <b><?php echo $row['name'] ?></b></p>
                         <p>Description : <b class="truncate"><?php echo $row['description'] ?></b></p>
                         <p>Base price : <b><?php echo "N".number_format($row['price'], 2) ?></b></p>
                         <p>Small price : <b><?php echo isset($row['price_small']) && $row['price_small'] !== null ? "N".number_format($row['price_small'], 2) : '-' ; ?></b></p>
                         <p>Medium price : <b><?php echo isset($row['price_medium']) && $row['price_medium'] !== null ? "N".number_format($row['price_medium'], 2) : '-' ; ?></b></p>
                         <p>Large price : <b><?php echo isset($row['price_large']) && $row['price_large'] !== null ? "N".number_format($row['price_large'], 2) : '-' ; ?></b></p>
-                      </td>
-                      <td class="text-center">
+                    </td>
+                    <td class="text-center">
                         <button class="btn btn-sm btn-primary edit_menu" type="button" 
-                          data-id="<?php echo $row['id'] ?>"
-                          data-name="<?php echo $row['name'] ?>"
-                          data-status="<?php echo $row['status'] ?>"
-                          data-description="<?php echo $row['description'] ?>"
-                          data-price="<?php echo $row['price'] ?>"
-                          data-has_size_options="<?php echo isset($row['price_small']) ? 1 : 0; ?>"
-                          data-price_small="<?php echo isset($row['price_small']) ? $row['price_small'] : ''; ?>"
-                          data-price_medium="<?php echo isset($row['price_medium']) ? $row['price_medium'] : ''; ?>"
-                          data-price_large="<?php echo isset($row['price_large']) ? $row['price_large'] : ''; ?>"
-                          data-img_path="<?php echo $row['img_path'] ?>"
+                            data-id="<?php echo $row['id'] ?>"
+                            data-name="<?php echo $row['name'] ?>"
+                            data-status="<?php echo $row['status'] ?>"
+                            data-description="<?php echo $row['description'] ?>"
+                            data-price="<?php echo $row['price'] ?>"
+                            data-has_size_options="<?php echo isset($row['price_small']) ? 1 : 0; ?>"
+                            data-price_small="<?php echo isset($row['price_small']) ? $row['price_small'] : ''; ?>"
+                            data-price_medium="<?php echo isset($row['price_medium']) ? $row['price_medium'] : ''; ?>"
+                            data-price_large="<?php echo isset($row['price_large']) ? $row['price_large'] : ''; ?>"
+                            data-img_path="<?php echo $row['img_path'] ?>"
                         >Edit</button>
                         <button class="btn btn-sm btn-danger delete_menu" type="button" data-id="<?php echo $row['id'] ?>">Delete</button>
-                      </td>
-                    </tr>
-                    <?php endwhile; ?>
-                  </tbody>
+                    </td>
+                </tr>
+                <?php endwhile; ?>
+            </tbody>
                 </table>
             </div>
           </div>

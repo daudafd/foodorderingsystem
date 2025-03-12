@@ -1,37 +1,34 @@
- <!-- Masthead-->
-        <header class="masthead">
-            <div class="container h-100">
-                <div class="row h-100 align-items-center justify-content-center text-center">
-                    <div class="col-lg-10 align-self-end mb-4" style="background: #0000002e;">
-                    	 <h1 class="text-uppercase text-white font-weight-bold">About Us</h1>
-                        <hr class="divider my-4" />
-                    </div>
-                    
-                </div>
+<header class="masthead">
+    <div class="container h-100">
+        <div class="row h-100 align-items-center justify-content-center text-center">
+            <div class="col-lg-10 align-self-end mb-4" style="background: #0000002e;">
+                <h1 class="text-uppercase text-white font-weight-bold">About Us</h1>
+                <hr class="divider my-4" />
             </div>
-        </header>
-        <?php
+        </div>
+    </div>
+</header>
 
-// session_start();
+<?php
 include('admin/db_connect.php');
 
-// Get system settings (you probably still need this)
-$qry = $conn->query("SELECT * FROM system_settings LIMIT 1");
+// Ensure database connection uses UTF-8
+$conn->exec("SET NAMES 'utf8mb4'");
+
+// Get system settings
+$qry = $conn->prepare("SELECT * FROM system_settings LIMIT 1");
+$qry->execute();
 $meta = [];
-if ($qry->num_rows > 0) {
-    foreach ($qry->fetch_array() as $k => $val) {
-        $meta[$k] = $val;
-    }
-     // Check if name exists and assign it to the session
-     if (isset($meta['name'])) {
-      $setting_name = $meta['name'];
-      $setting_content = $meta['about_content'];
-  }
+$result = $qry->fetch(PDO::FETCH_ASSOC);
+
+if ($result) {
+    $setting_name = $result['name'];
+    $setting_content = $result['about_content'];
 }
-?> 
-    <section class="page-section">
-        <div class="container">
-    <?php echo html_entity_decode($setting_content) ?>        
-            
-        </div>
-        </section>
+?>
+
+<section class="page-section">
+    <div class="container">
+        <?php echo $setting_content; ?>
+    </div>
+</section>

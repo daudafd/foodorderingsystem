@@ -4,10 +4,11 @@ $user = getenv('DB_USER');
 $pass = getenv('DB_PASS');
 $db = getenv('DB_NAME');
 
-$conn = new mysqli($host, $user, $pass, $db);
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+try {
+    $conn = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch(PDOException $e) {
+    echo json_encode(['success' => false, 'error' => "Connection failed: " . $e->getMessage()]);
+    die(); // Stop execution
 }
-
 ?>

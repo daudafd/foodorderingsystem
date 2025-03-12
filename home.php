@@ -47,14 +47,16 @@ if (session_status() === PHP_SESSION_NONE) {
                 </div>
             </div>
         </header>
-<section class="page-section" id="menu">
+        <section class="page-section" id="menu">
     <div id="menu-field" class="card-deck">
         <?php
         include 'admin/db_connect.php';
 
         // Fetch available items (status = 1)
-        $qry_available = $conn->query("SELECT * FROM product_list WHERE status = 1 ORDER BY rand()");
-        while ($row_available = $qry_available->fetch_assoc()):
+        $qry_available = $conn->prepare("SELECT * FROM product_list WHERE status = :status ORDER BY rand()");
+        $qry_available->execute([':status' => 1]);
+
+        while ($row_available = $qry_available->fetch(PDO::FETCH_ASSOC)):
             ?>
             <div class="col-lg-3">
                 <div class="card menu-item ">
@@ -73,10 +75,11 @@ if (session_status() === PHP_SESSION_NONE) {
 
         <?php
         // Fetch unavailable items (status = 0)
-        $qry_unavailable = $conn->query("SELECT * FROM product_list WHERE status = 0 ORDER BY rand()");
-        if ($qry_unavailable->num_rows > 0): // Only display "Not Available" if there are items
-            // echo "<div class='col-12 text-center'><h3>Not Available</h3></div>";
-            while ($row_unavailable = $qry_unavailable->fetch_assoc()):
+        $qry_unavailable = $conn->prepare("SELECT * FROM product_list WHERE status = :status ORDER BY rand()");
+        $qry_unavailable->execute([':status' => 0]);
+
+        if ($qry_unavailable->rowCount() > 0): // Only display "Not Available" if there are items
+            while ($row_unavailable = $qry_unavailable->fetch(PDO::FETCH_ASSOC)):
                 ?>
                 <div class="col-lg-3">
                     <div class="card menu-item ">

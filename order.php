@@ -1,7 +1,8 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 ?>
-<!-- Masthead -->
 <header class="masthead">
     <div class="container h-100">
         <div class="row h-100 align-items-center justify-content-center text-center">
@@ -31,31 +32,36 @@ session_start();
                     <tbody>
                         <?php
                         include('admin/db_connect.php');
-                    
+
                         $data = ""; // Initialize query filter
-                    
+
                         // Check if the user is logged in
                         if (isset($_SESSION['login_user_id'])) {
-                            $data = "WHERE user_id = '" . $_SESSION['login_user_id'] . "' AND payment_status IN (0, 1, 2, 3)";
+                            $data = "WHERE user_id = :user_id AND payment_status IN (0, 1, 2, 3)";
                         } else {
                             $ip = isset($_SERVER['HTTP_CLIENT_IP']) ? $_SERVER['HTTP_CLIENT_IP'] :
                                 (isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR']);
-                            $data = "WHERE client_ip = '$ip' AND payment_status IN (0, 1, 2, 3)";
+                            $data = "WHERE client_ip = :ip AND payment_status IN (0, 1, 2, 3)";
                         }
-                    
+
                         // Fetch orders with latest order first
-                        $qry = $conn->query("SELECT * FROM orders $data ORDER BY created_at DESC");
-                    
-                        if ($qry->num_rows > 0):
+                        $qry = $conn->prepare("SELECT * FROM orders $data ORDER BY created_at DESC");
+
+                        if (isset($_SESSION['login_user_id'])) {
+                            $qry->execute([':user_id' => $_SESSION['login_user_id']]);
+                        } else {
+                            $qry->execute([':ip' => $ip]);
+                        }
+
+                        if ($qry->rowCount() > 0):
                             // Calculate the total number of rows
-                            $totalRows = $qry->num_rows;
+                            $totalRows = $qry->rowCount();
                             $i = $totalRows; // Initialize counter with total rows
-                    
-                            while ($row = $qry->fetch_assoc()):
+
+                            while ($row = $qry->fetch(PDO::FETCH_ASSOC)):
                                 ?>
                                 <tr>
                                     <td><?php echo $i--; ?></td>
-                                    <!--<td><?php echo $row['transaction_reference']; ?></td>-->
                                     <td><?php echo $row['reference_id']; ?></td>
                                     <td><?php echo $row['total_amount']; ?></td>
                                     <td><?php echo $row['created_at']; ?></td>
@@ -76,10 +82,10 @@ session_start();
                                     </td>
                                 </tr>
                             <?php endwhile; else: ?>
-                                <tr>
-                                    <td colspan="6" class="text-center">No orders found.</td>
-                                </tr>
-                            <?php endif; ?>
+                            <tr>
+                                <td colspan="6" class="text-center">No orders found.</td>
+                            </tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -87,7 +93,6 @@ session_start();
     </div>
 </div>
 
-<!-- Modal -->
 <div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -96,7 +101,6 @@ session_start();
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- Order details will be loaded here -->
                 <div id="order-details"></div>
             </div>
         </div>

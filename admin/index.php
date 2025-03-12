@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>FIFI's Cuisine</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <?php
     session_start();
@@ -61,8 +60,7 @@
             </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         var mySidebar = document.getElementById("mySidebar");
         var overlayBg = document.getElementById("myOverlay");
@@ -111,10 +109,10 @@
             })
         }
         
-            $('#uni_modal').on('hidden.bs.modal', function() {
-                $(this).find(':focus').blur();
-                $('#order-details').empty();
-            });
+        $('#uni_modal').on('hidden.bs.modal', function() {
+            $(this).find(':focus').blur();
+            $('#order-details').empty();
+        });
 
         window._conf = function ($msg = '', $func = '', $params = []) {
             $('#confirm_modal #confirm').attr('onclick', $func + "(" + $params.join(',') + ")")

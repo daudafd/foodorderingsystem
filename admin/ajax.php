@@ -10,13 +10,21 @@ $crud = new Action();
 $valid_actions = [
     'login', 'login2', 'signin', 'logout', 'logout2', 'save_user', 'delete_user', 'signup', 
     'save_settings', 'save_category', 'delete_category', 'save_menu', 
-    'delete_menu', 'save_meat_option', 'delete_meat_option', 'save_soup_option', 
+    'delete_menu', 'save_meat_option', 'get_meat_price', 'delete_meat_option', 'save_soup_option', 
     'delete_soup_option', 'add_to_cart', 'get_cart_count', 'update_cart_qty', 
     'save_order', 'confirm_order', 'cancel_order', 'count_today_orders', 'remove_from_cart'
 ];
 
 // Sanitize the action parameter to ensure it's a valid action
 $action = isset($_GET['action']) && in_array($_GET['action'], $valid_actions) ? $_GET['action'] : null;
+
+// Handle count_today_orders correctly
+if ($action === 'count_today_orders') {
+    header('Content-Type: application/json');
+    echo $crud->count_today_orders(); // Use the correct object name
+    ob_end_flush();
+    exit();
+}
 
 // If the action is invalid, return an error and exit
 if ($action === null) {
@@ -147,6 +155,13 @@ switch ($action) {
        case 'save_meat_option':
             echo $crud->save_meat_option(); // Echo the result (1 or 0)
         break;
+    
+        case 'get_meat_price':
+            $meat_type = $_POST['meat_type'];
+            $size = $_POST['size'];
+            $result = $crud->get_meat_price($meat_type, $size);
+            echo json_encode($result);
+            break;
 
         case 'delete_meat_option':
             $delete = $crud->delete_meat_option();
@@ -214,13 +229,14 @@ switch ($action) {
             case 'remove_from_cart':
                 if (isset($_POST['id']) && is_numeric($_POST['id'])) {
                     $id = $_POST['id'];
-                    $delete = $crud->remove_from_cart($id); // Call the function
+                    $response = $crud->remove_from_cart($id); // Get the JSON response
+                    $decodedResponse = json_decode($response, true); // Decode JSON
             
-                    if ($delete === true) { // Check for boolean true
-                                    $total = $crud->get_cart_total();
+                    if ($decodedResponse && isset($decodedResponse['success']) && $decodedResponse['success'] === true) {
+                        $total = $crud->get_cart_total();
                         echo json_encode(['success' => true, 'total_amount' => number_format($total, 2)]);
                     } else {
-                        echo json_encode(['success' => false, 'error' => $delete]); // Send the error message
+                        echo json_encode(['success' => false, 'error' => $decodedResponse['error'] ?? 'Unknown error.']); // Send error
                     }
                 } else {
                     echo json_encode(['success' => false, 'error' => 'Invalid cart item ID.']);

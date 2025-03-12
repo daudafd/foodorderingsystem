@@ -27,8 +27,9 @@ include 'db_connect.php';
                                 <tbody>
                                     <?php
                                     include 'db_connect.php';
-                                    $qry = $conn->query("SELECT * FROM soup_options ORDER BY soup_type ASC");
-                                    while ($row = $qry->fetch_assoc()):
+                                    $qry = $conn->prepare("SELECT * FROM soup_options ORDER BY soup_type ASC");
+                                    $qry->execute();
+                                    while ($row = $qry->fetch(PDO::FETCH_ASSOC)) :
                                     ?>
                                         <tr>
                                             <td><?php echo $row['soup_type'] ?></td>
@@ -46,6 +47,7 @@ include 'db_connect.php';
             </div>
         </div>
     </div>
+</div>
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>

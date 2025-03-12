@@ -1,5 +1,5 @@
 <?php
-session_start();
+// session_start();
 ?>
 <div class="w3-main" style="margin-left:300px;margin-top:43px;">
     <header class="w3-container" style="padding-top:22px">
@@ -29,8 +29,11 @@ session_start();
                             <?php
                             $i = 1;
                             include 'db_connect.php';
-                            $qry = $conn->query("SELECT * FROM orders ORDER BY created_at DESC");
-                            while ($row = $qry->fetch_assoc()) :
+
+                            $qry = $conn->prepare("SELECT * FROM orders ORDER BY created_at DESC");
+                            $qry->execute();
+
+                            while ($row = $qry->fetch(PDO::FETCH_ASSOC)) :
                             ?>
                                 <tr>
                                     <td><?php echo $i++ ?></td>
@@ -52,7 +55,6 @@ session_start();
                                     <td><?php echo $row['mobile'] ?></td>
                                     <td><?php echo $row['created_at'] ?></td>
                                     <td><?php echo $row['confirmed_at'] ?></td>
-                                    <!--<td><?php echo $row['transaction_reference'] ?></td>-->
                                     <?php if ($row['payment_status'] == 0) : ?>
                                         <td class="text-center"><span class="badge bg-secondary">For Verification</span></td>
                                     <?php elseif ($row['payment_status'] == 3) : ?>
@@ -70,7 +72,7 @@ session_start();
                 </div>
             </div>
         </div>
-        <style>
+<style>
     #loading-overlay {
         display: none;
         position: fixed;
